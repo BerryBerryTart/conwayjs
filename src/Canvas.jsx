@@ -1,11 +1,12 @@
 import React from 'react';
-import Cell from './Cell.js';
+import Cell from './Cell';
 
 class Canvas extends React.Component {
     constructor(props){
         super(props);
         this.state = {
             cells: [],
+            aliveCells:[],
             incrementor: null,
             step: 0
         }
@@ -32,7 +33,9 @@ class Canvas extends React.Component {
                     const cells = [...prevState.cells];
                     let newCell = React.cloneElement(cells[data.row][data.col].cell, {status: 'alive'});
                     cells[data.row][data.col] = {cell:newCell, status: 'alive'};
-                    return {cells};
+                    let aliveCells = [...prevState.aliveCells];
+                    aliveCells = [...aliveCells, this.generateCellString(data.row, data.col)];
+                    return {cells, aliveCells};
                 }
             )
         }
@@ -42,11 +45,16 @@ class Canvas extends React.Component {
                     const cells = [...prevState.cells];
                     let newCell = React.cloneElement(cells[data.row][data.col].cell, {status: 'dead'});
                     cells[data.row][data.col] = {cell:newCell, status: 'dead'};
-                    return {cells};
+                    let aliveCells = [...prevState.aliveCells]
+                    aliveCells = aliveCells.filter((e) => e !== this.generateCellString(data.row, data.col));                    
+                    return {cells, aliveCells};
                 }
             )
         }
+    }
 
+    generateCellString(row, col){
+        return `${row}|${col}`;
     }
 
     handleReset(){
@@ -54,7 +62,7 @@ class Canvas extends React.Component {
         if(this.state.incrementor){
             this.handleStopTime();
         }
-        this.setState({cells: masterArray, step: 0});
+        this.setState({cells: masterArray, step: 0, aliveCells: []});
     }
 
     newEmptyCellArray(){
@@ -105,22 +113,22 @@ class Canvas extends React.Component {
     }
 
     cellLifeCheck(){
-        let width = this.props.width;
-        let height = this.props.height;
         let newArray = this.state.cells;
         let emptyArray = this.newEmptyCellArray();
-        for (let i = 0; i < height; i++){
-            for (let j = 0; j < width; j++){
-                let checkCells = this.checkAdjacentCells(i, j, newArray[i][j].status);
-                if (checkCells){
-                    emptyArray[i][j].cell = React.cloneElement(newArray[i][j].cell, {status: 'alive'})
-                    emptyArray[i][j].status = 'alive';
-                }
-                else if (!checkCells){
-                    emptyArray[i][j].cell = React.cloneElement(newArray[i][j].cell, {status: 'dead'})
-                    emptyArray[i][j].status = 'dead';
-                }
+        for (let i = 0; i < this.state.aliveCells.length; i++){
+            const element = this.state.aliveCells[i].split('|');
+            const row = element[0];
+            const col = element[1];
+            let checkCells = this.checkAdjacentCells(row, col, newArray[row][col].status);
+            console.log(checkCells);
+            if (checkCells){
+                emptyArray[row][col].cell = React.cloneElement(newArray[row][col].cell, {status: 'alive'})
+                emptyArray[row][col].status = 'alive';
             }
+            else if (!checkCells){
+                emptyArray[row][col].cell = React.cloneElement(newArray[row][col].cell, {status: 'dead'})
+                emptyArray[row][col].status = 'dead';
+            }            
         }
         this.setState({cells: emptyArray, step: this.state.step + 1});
     }
