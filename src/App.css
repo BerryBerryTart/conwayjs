@@ -1,25 +1,29 @@
 body {
-    background-color: #191124;
+  background-color: #191124;
 }
 
-.App{
-    margin: 10px 10px 50px 10px;
-    height: 100vh;
-    width: 100vw;
+#canvas-container {
+  height: 100vh;
+  width: calc(100vw - 10px);
+  overflow: hidden;
+}
+
+#canvas {
+  margin: 10px 0px 0px 10px;
 }
 
 .steps {
-    color: white;
-    display: inline;
-    margin-left: 50px;
+  color: white;
+  display: inline;
+  margin-left: 20px;
 }
 
-.square{
-    width: 15px;
-    height: 15px;
-    border: 1px solid #37254f;
-    float: left;
-    margin: 1px;
+.square {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #37254f;
+  float: left;
+  margin: 1px;
 }
 
 .row {
@@ -29,9 +33,29 @@ body {
 }
 
 .alive {
-    background-color: #e6d4ff;
+  background-color: #e6d4ff;
 }
 
 .dead {
-    background-color: #523d6e;
+  background-color: #523d6e;
+}
+
+.controls {
+  padding-top: 5px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 30px;
+}
+
+.controls > button {
+  margin-right: 10px;
+}
+
+#speed {
+  margin-left: 20px;
+}
+
+#speed span {
+  color: white;
 }

@@ -1,14 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import Cell from "./Cell";
+import { throttle } from "lodash";
 
 export interface CellCoordsData {
   row: number;
   col: number;
-}
-
-interface CanvasProps {
-  width: number;
-  height: number;
 }
 
 interface CellCheckType {
@@ -16,26 +12,71 @@ interface CellCheckType {
   status: string;
 }
 
-const Canvas = (props: CanvasProps) => {
-  const { width, height } = props;
+const Canvas = () => {
+  const [width, setWidth] = useState<number>(20);
+  const [height, setHeight] = useState<number>(20);
+  const [widthWindow, setWidthWindow] = useState<number>(window.innerWidth);
+  const [heightWindow, setHeightWindow] = useState<number>(window.innerHeight);
   const [aliveCells, setAliveCells] = useState<CellCoordsData[]>([]);
-  const [step, setStep] = useState(0);
-  const [running, setRunning] = useState(false);
+  const [step, setStep] = useState<number>(0);
+  const [running, setRunning] = useState<boolean>(false);
+  const [speed, setSpeed] = useState<number>(100);
+
   const incrementor = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
 
+  const updateWindowHeight = () => {
+    const newHeight = window.innerHeight;
+    setHeightWindow(newHeight);
+
+    clearTimeout(incrementor.current);
+    incrementor.current = undefined;
+    setRunning(false);
+  };
+
+  const updateWindowWidth = () => {
+    const newWidth = window.innerWidth;
+    setWidthWindow(newWidth);
+
+    clearTimeout(incrementor.current);
+    incrementor.current = undefined;
+    setRunning(false);
+  };
+
   useEffect(() => {
+    const h = throttle(updateWindowHeight, 200);
+    const w = throttle(updateWindowWidth, 200);
+
+    window.addEventListener("resize", h);
+    window.addEventListener("resize", w);
+
     return function cleanUp() {
       clearTimeout(incrementor.current);
     };
   }, []);
 
   useEffect(() => {
+    // 10px + 50px on each side height
+    // each cell is 20px high
+
+    const newHeight = Math.floor((heightWindow - 60) / 20);
+    setHeight(newHeight);
+  }, [heightWindow]);
+
+  useEffect(() => {
+    // 10px + 10px on each side width
+    // each cell is 20px wide
+
+    const newWidth = Math.floor((widthWindow - 20) / 20);
+    setWidth(newWidth);
+  }, [widthWindow]);
+
+  useEffect(() => {
     if (running) {
-      setTimeout(() => {
+      incrementor.current = setTimeout(() => {
         cellLifeCheck();
-      }, 100);
+      }, speed);
     }
   }, [running, aliveCells]);
 
@@ -55,27 +96,23 @@ const Canvas = (props: CanvasProps) => {
     setAliveCells(clonedAlive);
   }
 
-  const handleCellDrag = (data: CellCoordsData) => {
-    if (running) return;
-    const clonedAlive = structuredClone(aliveCells);
-    clonedAlive.push({ col: data.col, row: data.row });
-    setAliveCells(clonedAlive);
-  };
+  // const handleCellDrag = (data: CellCoordsData) => {
+  //   if (running) return;
+  //   const clonedAlive = structuredClone(aliveCells);
+  //   clonedAlive.push({ col: data.col, row: data.row });
+  //   setAliveCells(clonedAlive);
+  // };
 
-  function handleReset() {
-    setStep(0);
-    setAliveCells([]);
+  async function handleReset() {
+    setRunning(false);
     clearTimeout(incrementor.current);
     incrementor.current = undefined;
-    setRunning(false);
+    setStep(0);
+    setAliveCells([]);
   }
 
   function handleNextClick() {
     cellLifeCheck();
-  }
-
-  function handleStartTime() {
-    setRunning(true);
   }
 
   function handleStopTime() {
@@ -84,11 +121,16 @@ const Canvas = (props: CanvasProps) => {
     setRunning(false);
   }
 
+  const handleSpeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const e = event.target.value;
+    setSpeed(Number(e));
+  };
+
   const getCellStr = (cell: CellCoordsData): string => {
     return `${cell.row}|${cell.col}`;
   };
 
-  function cellLifeCheck() {
+  const cellLifeCheck = () => {
     const cellsToCheck = new Map<string, string>();
 
     //first add alive cells
@@ -135,7 +177,7 @@ const Canvas = (props: CanvasProps) => {
 
     setAliveCells(newCells);
     setStep((step) => step + 1);
-  }
+  };
 
   /*
     {coords} == alive
@@ -208,18 +250,32 @@ const Canvas = (props: CanvasProps) => {
   };
 
   return (
-    <div>
-      {renderAllCells()}
-      <div className="controls">
-        <button onClick={handleNextClick} disabled={running}>
-          Next
-        </button>
-        <button onClick={handleStartTime} disabled={running}>
-          Start
-        </button>
-        <button onClick={handleStopTime}>Stop</button>
-        <button onClick={handleReset}>Reset</button>
-        <p className="steps">N = {step}</p>
+    <div id="canvas-container">
+      <div id="canvas">
+        {renderAllCells()}
+        <div className="controls">
+          <button onClick={handleNextClick} disabled={running}>
+            Next
+          </button>
+          <button onClick={() => setRunning(true)} disabled={running}>
+            Start
+          </button>
+          <button onClick={handleStopTime}>Stop</button>
+          <button onClick={handleReset}>Reset</button>
+          <div id="speed">
+            <span>SPEED: </span>
+            <input
+              type="range"
+              name="speed"
+              min="50"
+              max="500"
+              step="50"
+              defaultValue={speed}
+              onChange={handleSpeedChange}
+            />
+          </div>
+          <p className="steps">STEP: {step}</p>
+        </div>
       </div>
     </div>
   );

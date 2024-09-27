@@ -7,7 +7,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <Canvas width={20} height={20} />
+        <Canvas />
       </div>
     );
   }

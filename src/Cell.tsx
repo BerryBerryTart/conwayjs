@@ -1,7 +1,6 @@
-import React, { useContext } from "react";
+import React from "react";
 import { CellCoordsData } from "./Canvas";
-import { MouseContext } from "./MouseContext";
-import { throttle } from "lodash";
+// import { MouseContext } from "./MouseContext";
 
 export interface CellProps {
   status: string;
@@ -12,7 +11,7 @@ export interface CellProps {
 }
 
 const Cell = (props: CellProps) => {
-  const mouseContext = useContext(MouseContext);
+  // const mouseContext = useContext(MouseContext);
 
   function handleExternalClick() {
     props.handleCellClick({
