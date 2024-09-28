@@ -40,22 +40,29 @@ body {
   background-color: #523d6e;
 }
 
-.controls {
+#controls-container {
   padding-top: 5px;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  height: 30px;
-}
-
-.controls > button {
-  margin-right: 10px;
-}
-
-#speed {
-  margin-left: 20px;
-}
-
-#speed span {
-  color: white;
+  justify-content: space-between;
+  .controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 30px;
+    button {
+      margin-right: 10px;
+    }
+    #speed {
+      margin-left: 20px;
+    }
+    #speed span {
+      color: white;
+    }
+  }
+  #controls-right {
+    margin-right: 10px;
+    button {
+      margin-left: 10px;
+    }
+  }
 }

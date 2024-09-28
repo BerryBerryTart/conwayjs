@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Cell from "./Cell";
 import { throttle } from "lodash";
+import { PatternList } from "./Patterns";
 
 export interface CellCoordsData {
   row: number;
@@ -21,6 +22,8 @@ const Canvas = () => {
   const [step, setStep] = useState<number>(0);
   const [running, setRunning] = useState<boolean>(false);
   const [speed, setSpeed] = useState<number>(100);
+  const [editing, setEditing] = useState<boolean>(false);
+  const [pattern, setPattern] = useState<string | undefined>(undefined);
 
   const incrementor = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
@@ -44,15 +47,28 @@ const Canvas = () => {
     setRunning(false);
   };
 
+  const escapeListener = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      let n = false;
+      setEditing(n);
+      setRunning(n);
+    }
+  };
+
   useEffect(() => {
     const h = throttle(updateWindowHeight, 200);
     const w = throttle(updateWindowWidth, 200);
+    const e = throttle(escapeListener, 150);
 
     window.addEventListener("resize", h);
     window.addEventListener("resize", w);
+    window.addEventListener("keydown", e);
 
     return function cleanUp() {
       clearTimeout(incrementor.current);
+      document.removeEventListener("resize", h);
+      document.removeEventListener("resize", w);
+      document.removeEventListener("keydown", e);
     };
   }, []);
 
@@ -82,6 +98,10 @@ const Canvas = () => {
 
   function handleCellClick(data: CellCoordsData) {
     if (running) return;
+    if (editing) {
+      placePattern(data);
+      return;
+    }
     const clonedAlive = structuredClone(aliveCells);
     const isAlreadyAlive = clonedAlive.find(
       (el) => el.col === data.col && el.row === data.row
@@ -95,6 +115,48 @@ const Canvas = () => {
     }
     setAliveCells(clonedAlive);
   }
+
+  const placePattern = (data: CellCoordsData) => {
+    if (!pattern) return;
+    const patternStrings = pattern.split("|");
+    const patternArray: string[][] = [];
+    for (let rowIndex = 0; rowIndex < patternStrings.length; rowIndex++) {
+      const tempArray: string[] = [];
+      for (
+        let columnIndex = 0;
+        columnIndex < patternStrings[rowIndex].length;
+        columnIndex++
+      ) {
+        const p = patternStrings[rowIndex][columnIndex];
+        if (p === "." || p === "o") {
+          tempArray.push(p);
+        }
+      }
+      patternArray.push(tempArray);
+    }
+    const clonedAlive = structuredClone(aliveCells);
+
+    for (let rowIndex = 0; rowIndex < patternArray.length; rowIndex++) {
+      for (
+        let colIndex = 0;
+        colIndex < patternArray[rowIndex].length;
+        colIndex++
+      ) {
+        const p = patternArray[rowIndex][colIndex];
+        if (
+          p === "o" &&
+          rowIndex + data.row < height &&
+          colIndex + data.col < width
+        ) {
+          clonedAlive.push({
+            row: rowIndex + data.row,
+            col: colIndex + data.col,
+          });
+        }
+      }
+    }
+    setAliveCells(clonedAlive);
+  };
 
   // const handleCellDrag = (data: CellCoordsData) => {
   //   if (running) return;
@@ -126,6 +188,10 @@ const Canvas = () => {
     setSpeed(Number(e));
   };
 
+  const handlePatternSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setPattern(event.target.value);
+  };
+
   const getCellStr = (cell: CellCoordsData): string => {
     return `${cell.row}|${cell.col}`;
   };
@@ -151,9 +217,9 @@ const Canvas = () => {
           if (
             !cellsToCheck.has(cellStr) &&
             rowIndex >= 0 &&
-            rowIndex < width &&
+            rowIndex < height &&
             colIndex >= 0 &&
-            colIndex < height
+            colIndex < width
           ) {
             cellsToCheck.set(cellStr, "dead");
           }
@@ -200,9 +266,9 @@ const Canvas = () => {
         if (
           fCell &&
           rowIndex >= 0 &&
-          rowIndex < width &&
+          rowIndex < height &&
           colIndex >= 0 &&
-          colIndex < height
+          colIndex < width
         ) {
           count++;
         }
@@ -223,13 +289,13 @@ const Canvas = () => {
 
   const renderAllCells = () => {
     const elements = [];
-    for (let columnIndex = 0; columnIndex < height; columnIndex++) {
-      let row = [];
-      for (let rowIndex = 0; rowIndex < width; rowIndex++) {
+    for (let rowIndex = 0; rowIndex < height; rowIndex++) {
+      let column = [];
+      for (let columnIndex = 0; columnIndex < width; columnIndex++) {
         const isAlive = aliveCells.find(
           (el) => el.col === columnIndex && el.row === rowIndex
         );
-        row.push(
+        column.push(
           <Cell
             status={isAlive ? "alive" : "dead"}
             key={"r:" + rowIndex + ";c:" + columnIndex}
@@ -241,40 +307,84 @@ const Canvas = () => {
         );
       }
       elements.push(
-        <div className="row" key={"r:" + columnIndex}>
-          {row}
+        <div className="row" key={"r:" + rowIndex}>
+          {column}
         </div>
       );
     }
     return elements;
   };
 
+  const buildSelectOptions = () => {
+    const options = [];
+    options.push(
+      <option value="default" disabled key="default">
+        Select Pattern
+      </option>
+    );
+    for (let i = 0; i < PatternList.length; i++) {
+      options.push(
+        <option key={PatternList[i].pattern} value={PatternList[i].pattern}>
+          {PatternList[i].description}
+        </option>
+      );
+    }
+
+    return options;
+  };
+
   return (
     <div id="canvas-container">
       <div id="canvas">
         {renderAllCells()}
-        <div className="controls">
-          <button onClick={handleNextClick} disabled={running}>
-            Next
-          </button>
-          <button onClick={() => setRunning(true)} disabled={running}>
-            Start
-          </button>
-          <button onClick={handleStopTime}>Stop</button>
-          <button onClick={handleReset}>Reset</button>
-          <div id="speed">
-            <span>SPEED: </span>
-            <input
-              type="range"
-              name="speed"
-              min="50"
-              max="500"
-              step="50"
-              defaultValue={speed}
-              onChange={handleSpeedChange}
-            />
+        <div id="controls-container">
+          <div className="controls">
+            <button onClick={handleNextClick} disabled={running || editing}>
+              Next
+            </button>
+            <button
+              onClick={() => setRunning(true)}
+              disabled={running || editing}
+            >
+              Start
+            </button>
+            <button onClick={handleStopTime} disabled={editing}>
+              Stop
+            </button>
+            <button onClick={handleReset} disabled={editing}>
+              Reset
+            </button>
+            <div id="speed">
+              <span>SPEED: </span>
+              <input
+                type="range"
+                name="speed"
+                min="25"
+                max="300"
+                step="25"
+                defaultValue={speed}
+                onChange={handleSpeedChange}
+              />
+            </div>
+            <p className="steps">STEP: {step}</p>
           </div>
-          <p className="steps">STEP: {step}</p>
+          <div id="controls-right">
+            {editing && (
+              <select
+                value={pattern}
+                defaultValue={"default"}
+                onChange={handlePatternSelect}
+              >
+                {buildSelectOptions()}
+              </select>
+            )}
+            <button
+              onClick={() => setEditing((edit) => !edit)}
+              disabled={running}
+            >
+              {editing ? "CANCEL" : "PLACE PATTERN"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
