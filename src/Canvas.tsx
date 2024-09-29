@@ -19,6 +19,7 @@ const Canvas = () => {
   const [widthWindow, setWidthWindow] = useState<number>(window.innerWidth);
   const [heightWindow, setHeightWindow] = useState<number>(window.innerHeight);
   const [aliveCells, setAliveCells] = useState<CellCoordsData[]>([]);
+  const [placementCells, setPlacementCells] = useState<CellCoordsData[]>([]);
   const [step, setStep] = useState<number>(0);
   const [running, setRunning] = useState<boolean>(false);
   const [speed, setSpeed] = useState<number>(100);
@@ -28,6 +29,7 @@ const Canvas = () => {
   const incrementor = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
   );
+  const editRef = useRef<CellCoordsData | undefined>(undefined);
 
   const updateWindowHeight = () => {
     const newHeight = window.innerHeight;
@@ -56,8 +58,8 @@ const Canvas = () => {
   };
 
   useEffect(() => {
-    const h = throttle(updateWindowHeight, 200);
-    const w = throttle(updateWindowWidth, 200);
+    const h = throttle(updateWindowHeight, 100);
+    const w = throttle(updateWindowWidth, 100);
     const e = throttle(escapeListener, 150);
 
     window.addEventListener("resize", h);
@@ -66,9 +68,9 @@ const Canvas = () => {
 
     return function cleanUp() {
       clearTimeout(incrementor.current);
-      document.removeEventListener("resize", h);
-      document.removeEventListener("resize", w);
-      document.removeEventListener("keydown", e);
+      window.removeEventListener("resize", h);
+      window.removeEventListener("resize", w);
+      window.removeEventListener("keydown", e);
     };
   }, []);
 
@@ -96,10 +98,22 @@ const Canvas = () => {
     }
   }, [running, aliveCells]);
 
+  useEffect(() => {
+    if (!editing) {
+      setPlacementCells([]);
+      editRef.current = undefined;
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    if (editRef.current) placePattern(editRef.current);
+  }, [pattern]);
+
   function handleCellClick(data: CellCoordsData) {
     if (running) return;
     if (editing) {
-      placePattern(data);
+      const arr = placePattern(data);
+      if (arr) setAliveCells(arr);
       return;
     }
     const clonedAlive = structuredClone(aliveCells);
@@ -115,6 +129,39 @@ const Canvas = () => {
     }
     setAliveCells(clonedAlive);
   }
+
+  const handleCellHover = (data: CellCoordsData) => {
+    if (!editing) return;
+    placePattern(data);
+    editRef.current = data;
+  };
+
+  const handlePatternRotate = () => {
+    if (!editing || !pattern) return;
+    const patternSplitArr = pattern.split("|").filter((el) => !!el);
+    const lengths = patternSplitArr.map((a) => a.length);
+    const longestRow = Math.max(...lengths);
+
+    //backfill and normalise due to compression
+    const patternClone = structuredClone(patternSplitArr);
+    for (let i = 0; i < patternClone.length; i++) {
+      if (patternClone[i].length < longestRow) {
+        patternClone[i] = patternClone[i].padEnd(longestRow, ".");
+      }
+    }
+
+    //rotato matrix
+    const rotatedArr: string[] = [];
+    for (let colIndex = longestRow - 1; colIndex >= 0; colIndex--) {
+      const buff: string[] = [];
+      for (let rowIndex = 0; rowIndex < patternClone.length; rowIndex++) {
+        buff.push(patternClone[rowIndex][colIndex]);
+      }
+      const str = buff.join("");
+      rotatedArr.push(str);
+    }
+    setPattern(rotatedArr.join("|"));
+  };
 
   const placePattern = (data: CellCoordsData) => {
     if (!pattern) return;
@@ -135,6 +182,7 @@ const Canvas = () => {
       patternArray.push(tempArray);
     }
     const clonedAlive = structuredClone(aliveCells);
+    const newArray = [] as CellCoordsData[];
 
     for (let rowIndex = 0; rowIndex < patternArray.length; rowIndex++) {
       for (
@@ -143,27 +191,30 @@ const Canvas = () => {
         colIndex++
       ) {
         const p = patternArray[rowIndex][colIndex];
+        const isAlive = aliveCells.find(
+          (el) =>
+            el.col === colIndex + data.col && el.row === rowIndex + data.row
+        );
         if (
           p === "o" &&
           rowIndex + data.row < height &&
-          colIndex + data.col < width
+          colIndex + data.col < width &&
+          !isAlive
         ) {
           clonedAlive.push({
+            row: rowIndex + data.row,
+            col: colIndex + data.col,
+          });
+          newArray.push({
             row: rowIndex + data.row,
             col: colIndex + data.col,
           });
         }
       }
     }
-    setAliveCells(clonedAlive);
+    setPlacementCells(newArray);
+    return clonedAlive;
   };
-
-  // const handleCellDrag = (data: CellCoordsData) => {
-  //   if (running) return;
-  //   const clonedAlive = structuredClone(aliveCells);
-  //   clonedAlive.push({ col: data.col, row: data.row });
-  //   setAliveCells(clonedAlive);
-  // };
 
   async function handleReset() {
     setRunning(false);
@@ -287,6 +338,13 @@ const Canvas = () => {
     return null;
   }
 
+  const getClassName = (status: string) => {
+    let className = "square ";
+
+    className = `square ${status === "dead" ? "dead" : "alive"}`;
+    return className;
+  };
+
   const renderAllCells = () => {
     const elements = [];
     for (let rowIndex = 0; rowIndex < height; rowIndex++) {
@@ -295,14 +353,19 @@ const Canvas = () => {
         const isAlive = aliveCells.find(
           (el) => el.col === columnIndex && el.row === rowIndex
         );
+        const isPlacingPattern = placementCells.find(
+          (el) => el.col === columnIndex && el.row === rowIndex
+        );
         column.push(
           <Cell
-            status={isAlive ? "alive" : "dead"}
+            style={`${getClassName(isAlive ? "alive" : "dead")} ${
+              isPlacingPattern ? "temp" : ""
+            }`}
             key={"r:" + rowIndex + ";c:" + columnIndex}
             col={columnIndex}
             row={rowIndex}
             handleCellClick={handleCellClick}
-            // handleCellDrag={handleCellDrag}
+            handleCellHover={handleCellHover}
           />
         );
       }
@@ -318,13 +381,16 @@ const Canvas = () => {
   const buildSelectOptions = () => {
     const options = [];
     options.push(
-      <option value="default" disabled key="default">
+      <option value="default" key="default">
         Select Pattern
       </option>
     );
     for (let i = 0; i < PatternList.length; i++) {
       options.push(
-        <option key={PatternList[i].pattern} value={PatternList[i].pattern}>
+        <option
+          key={PatternList[i].pattern}
+          value={PatternList[i].pattern.replace(/\n|\t| /g, "")}
+        >
           {PatternList[i].description}
         </option>
       );
@@ -335,7 +401,7 @@ const Canvas = () => {
 
   return (
     <div id="canvas-container">
-      <div id="canvas">
+      <div id="canvas" onWheel={throttle(handlePatternRotate, 50)}>
         {renderAllCells()}
         <div id="controls-container">
           <div className="controls">
@@ -370,11 +436,7 @@ const Canvas = () => {
           </div>
           <div id="controls-right">
             {editing && (
-              <select
-                value={pattern}
-                defaultValue={"default"}
-                onChange={handlePatternSelect}
-              >
+              <select value={pattern} onChange={handlePatternSelect}>
                 {buildSelectOptions()}
               </select>
             )}

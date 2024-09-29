@@ -6,15 +6,11 @@ export interface PatternType {
 export const PatternList: PatternType[] = [
   {
     description: "Blinker (h) (3x1)",
-    pattern: "ooo",
+    pattern: `ooo`,
   },
   {
     description: "Blinker (v) (1x3)",
-    pattern: `
-      .o|
-      .o|
-      .o
-    `,
+    pattern: `.o.|.o.|.o.`,
   },
   {
     description: "Glider (3x3)",
@@ -28,7 +24,7 @@ export const PatternList: PatternType[] = [
     description: "Lightweight Spaceship (5x4)",
     pattern: `
       .o..o|
-      o|
+      o....|
       o...o|
       oooo
     `,

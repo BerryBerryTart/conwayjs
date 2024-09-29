@@ -1,18 +1,16 @@
 import React from "react";
 import { CellCoordsData } from "./Canvas";
-// import { MouseContext } from "./MouseContext";
+import { throttle } from "lodash";
 
 export interface CellProps {
-  status: string;
+  style: string;
   row: number;
   col: number;
   handleCellClick: ({}: CellCoordsData) => void;
-  // handleCellDrag: ({}: CellCoordsData) => void;
+  handleCellHover: ({}: CellCoordsData) => void;
 }
 
 const Cell = (props: CellProps) => {
-  // const mouseContext = useContext(MouseContext);
-
   function handleExternalClick() {
     props.handleCellClick({
       row: props.row,
@@ -20,20 +18,18 @@ const Cell = (props: CellProps) => {
     });
   }
 
-  // const handleMouseMove = (e: any) => {
-  //   if (mouseContext.isMouseDown) {
-  //     props.handleCellDrag({
-  //       row: props.row,
-  //       col: props.col,
-  //     });
-  //   }
-  // };
+  const returnHoverPos = throttle(() => {
+    props.handleCellHover({
+      row: props.row,
+      col: props.col,
+    });
+  }, 100);
 
   return (
     <div
-      className={props.status === "dead" ? "square dead" : "square alive"}
+      className={props.style}
       onClick={handleExternalClick}
-      // onMouseMove={handleMouseMove}
+      onMouseEnter={returnHoverPos}
     ></div>
   );
 };
