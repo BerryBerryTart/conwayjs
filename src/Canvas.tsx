@@ -77,7 +77,6 @@ const Canvas = () => {
   useEffect(() => {
     // 10px + 50px on each side height
     // each cell is 20px high
-
     const newHeight = Math.floor((heightWindow - 60) / 20);
     setHeight(newHeight);
   }, [heightWindow]);
@@ -85,7 +84,6 @@ const Canvas = () => {
   useEffect(() => {
     // 10px + 10px on each side width
     // each cell is 20px wide
-
     const newWidth = Math.floor((widthWindow - 20) / 20);
     setWidth(newWidth);
   }, [widthWindow]);
@@ -134,6 +132,11 @@ const Canvas = () => {
     if (!editing) return;
     placePattern(data);
     editRef.current = data;
+  };
+
+  const handleCanvasKeyEvent = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const key = event.key;
+    if (key === "r") handlePatternRotate();
   };
 
   const handlePatternRotate = () => {
@@ -216,7 +219,7 @@ const Canvas = () => {
     return clonedAlive;
   };
 
-  async function handleReset() {
+  function handleReset() {
     setRunning(false);
     clearTimeout(incrementor.current);
     incrementor.current = undefined;
@@ -380,16 +383,12 @@ const Canvas = () => {
 
   const buildSelectOptions = () => {
     const options = [];
-    options.push(
-      <option value="default" key="default">
-        Select Pattern
-      </option>
-    );
     for (let i = 0; i < PatternList.length; i++) {
       options.push(
         <option
           key={PatternList[i].pattern}
           value={PatternList[i].pattern.replace(/\n|\t| /g, "")}
+          disabled={PatternList[i]?.disabled}
         >
           {PatternList[i].description}
         </option>
@@ -401,7 +400,11 @@ const Canvas = () => {
 
   return (
     <div id="canvas-container">
-      <div id="canvas" onWheel={throttle(handlePatternRotate, 50)}>
+      <div
+        id="canvas"
+        onWheel={throttle(handlePatternRotate, 50)}
+        onKeyDown={throttle(handleCanvasKeyEvent, 100)}
+      >
         {renderAllCells()}
         <div id="controls-container">
           <div className="controls">
@@ -432,7 +435,7 @@ const Canvas = () => {
                 onChange={handleSpeedChange}
               />
             </div>
-            <p className="steps">STEP: {step}</p>
+            <p className="steps">STEP: {step.toLocaleString()}</p>
           </div>
           <div id="controls-right">
             {editing && (

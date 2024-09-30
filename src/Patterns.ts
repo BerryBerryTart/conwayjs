@@ -1,9 +1,15 @@
 export interface PatternType {
   description: string;
   pattern: string;
+  disabled?: boolean;
 }
 
 export const PatternList: PatternType[] = [
+  {
+    description: "Select Pattern",
+    pattern: "",
+    disabled: true,
+  },
   {
     description: "Blinker (h) (3x1)",
     pattern: `ooo`,
@@ -31,7 +37,7 @@ export const PatternList: PatternType[] = [
   },
 
   {
-    description: "Octogon (8x8)",
+    description: "octogon (8x8)",
     pattern: `
       ...oo|
       ..o..o|
@@ -83,6 +89,55 @@ export const PatternList: PatternType[] = [
       ..........o.....o.......o|
       ...........o...o|
       ............oo|
+    `,
+  },
+  {
+    description: "METHUSELAHS",
+    pattern: "",
+    disabled: true,
+  },
+  {
+    description: "R-pentomino (3x3)",
+    pattern: `
+      .oo|
+      oo|
+      .o
+    `,
+  },
+  {
+    description: "Herschel (4x4)",
+    pattern: `
+      o|
+      ooo|
+      o.o|
+      ..o
+    `,
+  },
+  {
+    description: "Bunnies (8x4)",
+    pattern: `
+      o.....o|
+      ..o...o|
+      ..o..o.o|
+      .o.o|
+    `,
+  },
+  {
+    description: "Acorn (7x3)",
+    pattern: `
+      .o|
+      ...o|
+      oo..ooo
+    `,
+  },
+  {
+    description: "Blom (12x5)",
+    pattern: `
+      o..........o|
+      .oooo......o|
+      ..oo.......o|
+      ..........o|
+      ........o.o
     `,
   },
 ];
