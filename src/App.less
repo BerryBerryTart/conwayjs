@@ -1,0 +1,72 @@
+body {
+  background-color: #191124;
+}
+
+#canvas-container {
+  height: 100vh;
+  width: calc(100vw - 10px);
+  overflow: hidden;
+}
+
+#canvas {
+  margin: 10px 0px 0px 10px;
+}
+
+.steps {
+  color: white;
+  display: inline;
+  margin-left: 20px;
+}
+
+.square {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #37254f;
+  float: left;
+  margin: 1px;
+}
+
+.row {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.dead {
+  background-color: #523d6e;
+}
+
+.temp {
+  background-color: #755999;
+}
+
+.alive {
+  background-color: #e6d4ff;
+}
+
+#controls-container {
+  padding-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  .controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 30px;
+    button {
+      margin-right: 10px;
+    }
+    #speed {
+      margin-left: 20px;
+    }
+    #speed span {
+      color: white;
+    }
+  }
+  #controls-right {
+    margin-right: 10px;
+    button {
+      margin-left: 10px;
+    }
+  }
+}
