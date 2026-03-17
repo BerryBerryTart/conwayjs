@@ -4,18 +4,19 @@ body {
 
 #canvas-container {
   height: 100vh;
-  width: calc(100vw - 10px);
+  width: 100vw;
   overflow: hidden;
-}
-
-#canvas {
-  margin: 10px 0px 0px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .steps {
   color: white;
   display: inline;
   margin-left: 20px;
+  font-size: 14px;
 }
 
 .square {
@@ -37,16 +38,18 @@ body {
 }
 
 .temp {
-  background-color: #755999;
+  background-color: #b49099;
 }
 
 .alive {
-  background-color: #e6d4ff;
+  background-color: #eeb9c6;
 }
 
 #controls-container {
   padding-top: 5px;
+  width: 90vw;
   display: flex;
+  align-items: center;
   justify-content: space-between;
   .controls {
     display: flex;
@@ -58,9 +61,14 @@ body {
     }
     #speed {
       margin-left: 20px;
-    }
-    #speed span {
-      color: white;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      span {
+        color: white;
+        margin-right: 8px;
+        font-size: 14px;
+      }
     }
   }
   #controls-right {
@@ -68,5 +76,24 @@ body {
     button {
       margin-left: 10px;
     }
+  }
+  button {
+    font-size: 14px;
+    background-color: #eeb9c6;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #5e444a;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+  button:hover {
+    background-color: #f7cbd6;
+  }
+  button:disabled {
+    background-color: #b49099;
+    cursor: not-allowed;
+    color: #5e444a;
   }
 }

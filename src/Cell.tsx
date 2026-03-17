@@ -6,8 +6,8 @@ export interface CellProps {
   style: string;
   row: number;
   col: number;
-  handleCellClick: ({}: CellCoordsData) => void;
-  handleCellHover: ({}: CellCoordsData) => void;
+  handleCellClick: (data: CellCoordsData) => void;
+  handleCellHover: (data: CellCoordsData) => void;
 }
 
 const Cell = (props: CellProps) => {
@@ -26,11 +26,7 @@ const Cell = (props: CellProps) => {
   }, 100);
 
   return (
-    <div
-      className={props.style}
-      onClick={handleExternalClick}
-      onMouseEnter={returnHoverPos}
-    ></div>
+    <div className={props.style} onClick={handleExternalClick} onMouseEnter={returnHoverPos}></div>
   );
 };
 
